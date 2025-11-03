@@ -1,0 +1,48 @@
+#!/bin/bash
+
+cd ~
+
+if [[ $# -ne 3 ]]; then
+  echo "usage: add-map <map> <category> <mapper>"
+  exit 1
+fi
+
+map=$1
+category=$2
+mapper=$3
+
+forbidden='["\]'
+if [[ $map =~ $forbidden || $mapper =~ $forbidden ]]; then
+  echo "Map and mapper may not contain double quote and backslash"
+  exit 1
+fi
+
+if [[ $category != @(Short|Middle|Long Easy|Long Advanced|Long Hard|Fastcap) ]]; then
+  echo "Invalid category"
+  exit 1
+fi
+
+if [[ ! -f "$map.map" || ! -f "$map.png" ]]; then
+  echo "$map.map or $map.png is missing"
+  exit 1
+fi
+
+python3 unique-admin/validate_map.py "$map.map" "$category" || exit 1
+
+cp "$map.map" "unique-maps/maps/$map.map"
+cp "$map.png" "unique-maps/screenshots/$map.png"
+./map_convert_07 "$map.map" "unique-maps/maps7/$map.map"
+resetfile=$(
+    [[ $category != "Fastcap" ]] && echo "reset_race.cfg" ||
+    { [[ $map == *_no_wpns ]] && echo "reset_fastcap_no_wpns.cfg" || echo "reset_fastcap.cfg"; }
+)
+ln -sf "../$resetfile" "unique-maps/maps/$map.map.cfg"
+
+mariadb -D urace -e "INSERT INTO record_maps (Map, Server, Mapper) VALUES (\"$map\", \"$category\", \"$mapper\") ON DUPLICATE KEY UPDATE Server = VALUES(Server), Mapper = VALUES(Mapper);"
+
+unique-admin/generate-votes
+
+cd unique-maps
+git add .
+git commit -m "Add $map"
+git push

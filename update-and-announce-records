@@ -1,0 +1,19 @@
+#!/bin/bash
+
+source ~/unique-admin/.env
+
+mysql -D urace < ~/unique-admin/update-records.sql
+
+{
+mysql -D urace -N <<EOF
+CREATE TABLE IF NOT EXISTS bot_state (last_seen TIMESTAMP NOT NULL) AS SELECT CURRENT_TIMESTAMP() AS last_seen;
+START TRANSACTION;
+SELECT Map, Name, FORMAT(Time, 3) FROM cache_records WHERE Timestamp > (SELECT last_seen FROM bot_state) ORDER BY Timestamp;
+UPDATE bot_state SET last_seen = (SELECT MAX(Timestamp) FROM cache_records);
+COMMIT;
+EOF
+} | while IFS=$'\t' read -r map player time; do
+  jq -n --arg player "$player" --arg map "$map" --arg time "$time" \
+    '{content: "[\($player|@html)](https://uniqueclan.net/ranks/player/\($player|@uri)) took the first rank on [\($map|@html)](https://uniqueclan.net/map/\($map|@uri)) with \($time)"}' |
+    curl -X POST -H "Content-Type: application/json" -d @- "$WEBHOOK_RECORDS_URL"
+done

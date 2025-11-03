@@ -1,0 +1,22 @@
+#!/bin/bash
+
+map_votes() {
+  echo 'add_vote "Short maps" "clear_votes; exec votes_short.cfg"'
+  echo 'add_vote "Middle maps" "clear_votes; exec votes_middle.cfg"'
+  echo 'add_vote "Long maps" "clear_votes; exec votes_long.cfg"'
+  echo 'add_vote "Fastcap maps" "clear_votes; exec votes_fastcap.cfg"'
+  echo 'add_vote "-----" "info"'
+  echo "add_vote \"Random $1\" \"sv_server_type $1; random_map\""
+  echo "add_vote \"Unfinished $1\" \"sv_server_type $1; random_unfinished_map\""
+  echo 'add_vote "-----------" "info"'
+
+  mariadb -D urace -N -e "SELECT Map, Mapper FROM record_maps WHERE Server LIKE '$1%' ORDER BY Timestamp DESC, Map ASC" |
+  while IFS=$'\t' read -r map mapper; do
+    printf 'add_vote "%s by %s" "change_map \\"%s\\""\n' "$map" "$mapper" "$map"
+  done
+}
+
+map_votes Short > ~/unique-maps/votes_short.cfg
+map_votes Middle > ~/unique-maps/votes_middle.cfg
+map_votes Long > ~/unique-maps/votes_long.cfg
+map_votes Fastcap > ~/unique-maps/votes_fastcap.cfg

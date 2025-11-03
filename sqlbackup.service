@@ -1,0 +1,3 @@
+[Service]
+WorkingDirectory=%h/sqlbackup
+ExecStart=sh -c 'mysqldump urace record_maps record_race > `date +%%Y-%%m-%%d`.sql'
