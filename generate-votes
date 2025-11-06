@@ -5,10 +5,12 @@ map_votes() {
   echo 'add_vote "Middle maps" "clear_votes; exec votes_middle.cfg"'
   echo 'add_vote "Long maps" "clear_votes; exec votes_long.cfg"'
   echo 'add_vote "Fastcap maps" "clear_votes; exec votes_fastcap.cfg"'
-  echo 'add_vote "-=-=-=-=-=->" "info"'
+  echo 'add_vote " " "say I am a placeholder, why do you vote me?"'
+  echo 'add_vote "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=->" "info"'
   echo "add_vote \"Random $1\" \"sv_server_type $1; random_map\""
   echo "add_vote \"Unfinished $1\" \"sv_server_type $1; random_unfinished_map\""
-  echo 'add_vote "-=-=-=-=-=-> " "say Hooked on you since version 0.5"'
+  echo 'add_vote "  " "say Your main objective: Be faster than Tezcan"'
+  echo 'add_vote "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-> " "say Hooked on you since version 0.5"'
 
   mariadb -D urace -N -e "SELECT Map, Mapper FROM record_maps WHERE Server LIKE '$1%' ORDER BY Timestamp DESC, Map ASC" |
   while IFS=$'\t' read -r map mapper; do
