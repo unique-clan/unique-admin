@@ -1,18 +1,35 @@
 #!/bin/bash
 
 map_votes() {
-  echo 'add_vote "Short maps" "clear_votes; exec votes_short.cfg"'
-  echo 'add_vote "Middle maps" "clear_votes; exec votes_middle.cfg"'
-  echo 'add_vote "Long maps" "clear_votes; exec votes_long.cfg"'
-  echo 'add_vote "Fastcap maps" "clear_votes; exec votes_fastcap.cfg"'
+  # --- Mark current map type with an X
+  for type in Short Middle Long Fastcap; do
+    if [[ "$type" == "$1" ]]; then
+      echo "add_vote \"[X] $type maps\" \"clear_votes; exec votes_${type,,}.cfg\""
+    else
+      echo "add_vote \"[ ] $type maps\" \"clear_votes; exec votes_${type,,}.cfg\""
+    fi
+  done
   echo 'add_vote " " "say I am a placeholder, why do you vote me?"'
-  echo 'add_vote "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=->" "info"'
+
+  # --- Options
+  echo 'add_vote "-=-=-=-=-=-=-=-> Options <-=-=-=-=-=-=-=-" "info"'
   echo "add_vote \"Random $1\" \"sv_server_type $1; random_map\""
   echo "add_vote \"Unfinished $1\" \"sv_server_type $1; random_unfinished_map\""
   echo 'add_vote "  " "say Your main objective: Be faster than Tezcan"'
-  echo 'add_vote "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-> " "say Hooked on you since version 0.5"'
 
-  mariadb -D urace -N -e "SELECT Map, Mapper FROM record_maps WHERE Server LIKE '$1%' ORDER BY Timestamp DESC, Map ASC" |
+  # --- Most Recent
+  echo 'add_vote "-=-=-=-=-=-=-=-> Most Recent <-=-=-=-=-=-=-=-" "say Hooked on you since version 0.5"'
+
+  mariadb -D urace -N -e "SELECT Map, Mapper FROM record_maps WHERE Server LIKE '$1%' ORDER BY Timestamp DESC LIMIT 5" |
+  while IFS=$'\t' read -r map mapper; do
+    printf 'add_vote "[NEW] %s by %s" "change_map \\"%s\\""\n' "$map" "$mapper" "$map"
+  done
+  echo 'add_vote "   " "say Thank you for testing our voting system!"'
+
+  # --- All maps
+  echo 'add_vote "-=-=-=-=-=-=-=-> All Maps <-=-=-=-=-=-=-=-  " "say Hooked on you since version 0.5"'
+
+  mariadb -D urace -N -e "SELECT Map, Mapper FROM record_maps WHERE Server LIKE '$1%' ORDER BY Map ASC" |
   while IFS=$'\t' read -r map mapper; do
     printf 'add_vote "%s by %s" "change_map \\"%s\\""\n' "$map" "$mapper" "$map"
   done
