@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ~/unique-admin/.env
+
 cd ~
 
 if [[ $# -ne 3 ]]; then
@@ -46,3 +48,7 @@ cd unique-maps
 git add .
 git commit -m "Add $map"
 git push
+
+jq -n --arg map "$map" --arg mapper "$mapper" --arg category "$category" \
+  '{content: "[\($map|@html)](https://uniqueclan.net/map/\($map|@uri)) by [\($mapper|@html)](https://uniqueclan.net/mapper/\($mapper|@uri)) released on \($category)"}' |
+  curl -X POST -H "Content-Type: application/json" -d @- "$WEBHOOK_MAP_RELEASES_URL"
